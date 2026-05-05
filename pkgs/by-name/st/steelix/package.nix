@@ -8,16 +8,16 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "steelix";
-  version = "0-unstable-2026-03-19";
+  version = "0-unstable-2026-05-02";
 
   src = fetchFromGitHub {
     owner = "mattwparas";
     repo = "helix";
-    rev = "03ad8a1b026c28f9ecec80c4d67151731ec9d5fc";
-    hash = "sha256-ifMz83gWOfZTxahD+kafCij2Z6SBDgntM/nCdN7OZEs=";
+    rev = "ff73544b3d7d7c264a127a7d78944133015b285a";
+    hash = "sha256-AkotCZTWiQ5KAUDwmHcRuA7G0y8vqJYiLSXEtT+y/po=";
   };
 
-  cargoHash = "sha256-iKurrnsJw3x4QHNQYALinO39bw/XVAFJSdN/t8Nzq68=";
+  cargoHash = "sha256-eECfZ7UZGsbTnbfclBhSTNDj8fbfJNT9oBHjNsXpAG0=";
 
   nativeBuildInputs = [ installShellFiles ];
 

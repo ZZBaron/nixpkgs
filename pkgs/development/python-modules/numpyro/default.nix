@@ -30,15 +30,20 @@
 
 buildPythonPackage (finalAttrs: {
   pname = "numpyro";
-  version = "0.20.0";
+  version = "0.20.1";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "pyro-ppl";
     repo = "numpyro";
     tag = finalAttrs.version;
-    hash = "sha256-lMga+mPQEh6RCeqXKa2KELR6RcksKJ/K32h7X7a1IcQ=";
+    hash = "sha256-sNqllL9nBwXp0kn+HAjvIaHf7LR0UKh9q7DZ20yCr5A=";
   };
+
+  patches = [
+    # Remove usage of xla_pmap_p which was removed in jax 0.10.0
+    ./fix-jax-0.10.0-compat.patch
+  ];
 
   build-system = [ setuptools ];
 

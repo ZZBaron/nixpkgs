@@ -3,9 +3,10 @@
   lib,
   nodejs_24,
   pnpm_10_29_2,
+  node-gyp,
   fetchPnpmDeps,
   pnpmConfigHook,
-  electron_40,
+  electron_41,
   python3,
   makeWrapper,
   callPackage,
@@ -23,10 +24,13 @@
 
   withAppleEmojis ? false,
 }:
+assert lib.warnIf (commandLineArgs != "")
+  "`commandLineArgs` has been deprecated and will be removed in the future. Consider creating a wrapper script or a desktop entry with your desired flags."
+  true;
 let
   nodejs = nodejs_24;
   pnpm = pnpm_10_29_2;
-  electron = electron_40;
+  electron = electron_41;
 
   libsignal-node = callPackage ./libsignal-node.nix { inherit nodejs; };
   signal-sqlcipher = callPackage ./signal-sqlcipher.nix { inherit pnpm nodejs; };
@@ -55,13 +59,13 @@ let
     '';
   });
 
-  version = "8.4.0";
+  version = "8.8.0";
 
   src = fetchFromGitHub {
     owner = "signalapp";
     repo = "Signal-Desktop";
     tag = "v${version}";
-    hash = "sha256-QUBeScKGlDQAZ4F08DD/DuxeT0Hut3MmuswsjGsy+Q0=";
+    hash = "sha256-moWEqKWZgqIfhK01RUROF4Waxbn5kcmxZQ94PGai4ww=";
   };
 
   sticker-creator = stdenv.mkDerivation (finalAttrs: {
@@ -73,7 +77,7 @@ let
       inherit (finalAttrs) pname src version;
       inherit pnpm;
       fetcherVersion = 3;
-      hash = "sha256-WbdYcI5y01gdS9AIzy4VZZ6eFaTHaVPscTawLSsHzlc=";
+      hash = "sha256-CPZkybD/rCBMBK9qUSweBdLr9hXu0Ztn8fekqrRzUR4=";
     };
 
     strictDeps = true;
@@ -102,6 +106,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   strictDeps = true;
   nativeBuildInputs = [
+    node-gyp
     nodejs
     pnpmConfigHook
     pnpm
@@ -115,12 +120,23 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optionals stdenv.hostPlatform.isLinux [
     copyDesktopItems
   ];
-  buildInputs = (lib.optional (!withAppleEmojis) noto-fonts-color-emoji-png);
 
   patches = [
     ./force-90-days-expiration.patch
   ]
   ++ lib.optional (!withAppleEmojis) (
+    # Signal ships the Apple emoji set without a licence via an npm
+    # package and upstream does not seem terribly interested in fixing
+    # this; see:
+    #
+    # * <https://github.com/signalapp/Signal-Android/issues/5862>
+    # * <https://whispersystems.discoursehosting.net/t/signal-is-likely-violating-apple-license-terms-by-using-apple-emoji-in-the-sticker-creator-and-android-and-desktop-apps/52883>
+    #
+    # We work around this by replacing it with the Noto Color Emoji
+    # set, which is available under a FOSS licence and more likely to
+    # be used on a NixOS machine anyway. The Apple emoji are removed
+    # before `fetchPnpmDeps` to ensure that the build doesn’t cache the
+    # unlicensed emoji files.
     replaceVars ./replace-apple-emoji-with-noto-emoji.patch {
       noto-emoji-pngs = "${noto-fonts-color-emoji-png}/share/noto-fonts-color-emoji-png";
     }
@@ -137,19 +153,19 @@ stdenv.mkDerivation (finalAttrs: {
     substituteInPlace app/updateDefaultSession.main.ts \
       --replace-fail "\''${process.versions.electron}" "`jq -r '.devDependencies.electron' < package.json`"
 
-    # https://github.com/signalapp/Signal-Desktop/issues/7667
-    substituteInPlace ts/util/version.std.ts \
-      --replace-fail 'isAdhoc(version)' 'true'
+    # Disable auto-updater https://github.com/signalapp/Signal-Desktop/issues/7667
+    substituteInPlace config/production.json \
+      --replace-fail '"updatesEnabled": true' '"updatesEnabled": false'
 
     # Nix builds do not need upstream release hooks (notarization and
     # language-pack postprocessing), and they expect a different macOS
     # app layout than nixpkgs' Electron provides.
     substituteInPlace package.json \
-      --replace-fail '"artifactBuildCompleted": "ts/scripts/artifact-build-completed.node.js",' "" \
-      --replace-fail '"afterSign": "ts/scripts/after-sign.node.js",' "" \
-      --replace-fail '"afterPack": "ts/scripts/after-pack.node.js",' "" \
-      --replace-fail '"sign": "./ts/scripts/sign-macos.node.js",' "" \
-      --replace-fail '"afterAllArtifactBuild": "ts/scripts/after-all-artifact-build.node.js",' ""
+      --replace-fail '"artifactBuildCompleted": "scripts/artifact-build-completed.mjs",' "" \
+      --replace-fail '"afterSign": "scripts/after-sign.mjs",' "" \
+      --replace-fail '"afterPack": "scripts/after-pack.mjs",' "" \
+      --replace-fail '"sign": "scripts/sign-macos.mjs",' "" \
+      --replace-fail '"afterAllArtifactBuild": "scripts/after-all-artifact-build.mjs",' ""
   '';
 
   pnpmDeps = fetchPnpmDeps {
@@ -163,15 +179,15 @@ stdenv.mkDerivation (finalAttrs: {
     fetcherVersion = 3;
     hash =
       if withAppleEmojis then
-        "sha256-QaYUL5/JcXqd564CFAR+4EMMG38h8a1dpls054iWDzU="
+        "sha256-Ib+NQbnCawbGgx45u27ubf1a6lHkrGde+m1DUT23w5Y="
       else
-        "sha256-NEUKdRT0aVznkXTZOJJ8TCUhidhTAiDdBxoukKvt4qs=";
+        "sha256-0HzY/4XHjc8uAIMy6OzgGcuDNGfqQVW2RHOtyeYPJaw=";
   };
 
   env = {
     ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
     SIGNAL_ENV = "production";
-    SOURCE_DATE_EPOCH = 1774459818;
+    SOURCE_DATE_EPOCH = 1777225303;
   }
   // lib.optionalAttrs stdenv.hostPlatform.isDarwin {
     # Disable code signing during local macOS builds.
@@ -226,7 +242,7 @@ stdenv.mkDerivation (finalAttrs: {
     # Build it explicitly against Electron headers ahead of packaging.
     export npm_config_nodedir=${electron.headers}
     pushd node_modules/fs-xattr
-    pnpm exec node-gyp rebuild
+    node-gyp rebuild
     popd
     test -f node_modules/fs-xattr/build/Release/xattr.node
   '';
@@ -263,8 +279,9 @@ stdenv.mkDerivation (finalAttrs: {
       --add-flags ${lib.escapeShellArg commandLineArgs}
   ''
   + lib.optionalString (!stdenv.hostPlatform.isDarwin) ''
-    mkdir -p $out/share
+    mkdir -p $out/share/polkit-1/actions
     cp -r dist/*-unpacked/resources $out/share/signal-desktop
+    mv $out/share/signal-desktop/*.policy $out/share/polkit-1/actions/
 
     for icon in build/icons/png/*
     do
@@ -274,7 +291,6 @@ stdenv.mkDerivation (finalAttrs: {
     makeWrapper '${lib.getExe electron}' "$out/bin/signal-desktop" \
       --add-flags "$out/share/signal-desktop/app.asar" \
       --set-default ELECTRON_FORCE_IS_PACKAGED 1 \
-      --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--enable-features=WaylandWindowDecorations --enable-wayland-ime=true}}" \
       --add-flags ${lib.escapeShellArg commandLineArgs}
   ''
   + ''

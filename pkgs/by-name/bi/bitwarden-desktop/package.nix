@@ -134,7 +134,7 @@ buildNpmPackage' rec {
     patchShebangs apps/desktop/node_modules
 
     pushd apps/desktop/desktop_native/napi
-    npm run build
+    npm run build -- --release
     popd
 
     pushd apps/desktop/desktop_native/proxy
@@ -196,6 +196,7 @@ buildNpmPackage' rec {
     cp -r apps/desktop/dist/linux-*unpacked/{locales,resources{,.pak}} $out/opt/Bitwarden
 
     makeWrapper '${lib.getExe electron}' "$out/bin/bitwarden" \
+      --run "ulimit -c 0" \
       --add-flags $out/opt/Bitwarden/resources/app.asar \
       --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations --enable-wayland-ime=true}}" \
       --set-default ELECTRON_IS_DEV 0 \

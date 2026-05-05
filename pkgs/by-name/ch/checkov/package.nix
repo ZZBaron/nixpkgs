@@ -35,14 +35,14 @@ let
 in
 python3.pkgs.buildPythonApplication (finalAttrs: {
   pname = "checkov";
-  version = "3.2.511";
+  version = "3.2.526";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "bridgecrewio";
     repo = "checkov";
     tag = finalAttrs.version;
-    hash = "sha256-biTISn9XhwL1RhlztmydBXwyYruNhc0GoZ1PyIg0IUg=";
+    hash = "sha256-AWr95ZU7B3N6KZpJvPM3w41qv0ejoDtlRIEdDSH50w0=";
   };
 
   pythonRelaxDeps = [
@@ -106,6 +106,7 @@ python3.pkgs.buildPythonApplication (finalAttrs: {
     networkx
     openai
     packaging
+    platformdirs
     policyuniverse
     prettytable
     pycep-parser
@@ -158,6 +159,8 @@ python3.pkgs.buildPythonApplication (finalAttrs: {
     "test_sast_js_filtered_files_by_ts"
     # Timing sensitive
     "test_non_multiline_pair_time_limit_creating_report"
+    # Tests want to run bash script
+    "test_entrypoint"
   ];
 
   disabledTestPaths = [

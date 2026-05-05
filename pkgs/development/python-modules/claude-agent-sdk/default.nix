@@ -13,14 +13,14 @@
 
 buildPythonPackage (finalAttrs: {
   pname = "claude-agent-sdk";
-  version = "0.1.50";
+  version = "0.1.72";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "anthropics";
     repo = "claude-agent-sdk-python";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-uRuJqcUR+23SsI4i4W0tDCFQSE4lJWGxBcCap+ij7Ns=";
+    hash = "sha256-F8V1BUC0jeGWWFBS1GE931bycm0xJlAmoH1kPpxkk9o=";
   };
 
   build-system = [ hatchling ];

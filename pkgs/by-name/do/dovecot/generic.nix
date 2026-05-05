@@ -29,12 +29,12 @@
   libxcrypt,
   libstemmer,
   cyrus_sasl,
+  xapian,
   nixosTests,
   fetchpatch,
   rpcsvc-proto,
   libtirpc,
-  dovecot_pigeonhole_0_5,
-  dovecot_pigeonhole ? dovecot_pigeonhole_0_5,
+  dovecot_pigeonhole,
   withApparmor ? false,
   libapparmor,
   withLDAP ? true,
@@ -80,6 +80,10 @@ stdenv.mkDerivation (finalAttrs: {
     libxcrypt
     libstemmer
     cyrus_sasl.dev
+  ]
+  ++ lib.optionals (lib.versionAtLeast version "2.4") [
+    # fts_flatcurve built-in
+    xapian
   ]
   ++ lib.optionals (stdenv.hostPlatform.isLinux) [
     systemd
@@ -199,6 +203,7 @@ stdenv.mkDerivation (finalAttrs: {
   strictDeps = true;
 
   meta = {
+    broken = lib.versionAtLeast version "2.4" && stdenv.hostPlatform.isDarwin; # fails to link openssl
     homepage = "https://dovecot.org/";
     description = "Open source IMAP and POP3 email server written with security primarily in mind";
     license = with lib.licenses; [

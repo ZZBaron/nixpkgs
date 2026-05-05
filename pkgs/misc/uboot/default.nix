@@ -34,10 +34,10 @@
 }@pkgs:
 
 let
-  defaultVersion = "2025.10";
+  defaultVersion = "2026.04";
   defaultSrc = fetchurl {
     url = "https://ftp.denx.de/pub/u-boot/u-boot-${defaultVersion}.tar.bz2";
-    hash = "sha256-tPAyhI5WzI8hOtWfkTLAhNu7YyvCkXbQJOWCIODv30o=";
+    hash = "sha256-rHwEuLcASSOwCk5dZpnF300hIzusn9ppDYz7wgn/8v0=";
   };
 
   # Dependencies for the tools need to be included as either native or cross,
@@ -115,14 +115,12 @@ let
         ]
         ++ extraMakeFlags;
 
-        passAsFile = [ "extraConfig" ];
-
         configurePhase = ''
           runHook preConfigure
 
           make -j$NIX_BUILD_CORES ${defconfig}
 
-          cat $extraConfigPath >> .config
+          printf "%s" "$extraConfig" >> .config
 
           runHook postConfigure
         '';
@@ -145,17 +143,17 @@ let
 
         dontStrip = true;
 
-        meta =
+        __structuredAttrs = true;
 
-          {
-            homepage = "https://www.denx.de/wiki/U-Boot/";
-            description = "Boot loader for embedded systems";
-            license = lib.licenses.gpl2Plus;
-            maintainers = with lib.maintainers; [
-              lopsided98
-            ];
-          }
-          // extraMeta;
+        meta = {
+          homepage = "https://www.denx.de/wiki/U-Boot/";
+          description = "Boot loader for embedded systems";
+          license = lib.licenses.gpl2Plus;
+          maintainers = with lib.maintainers; [
+            lopsided98
+          ];
+        }
+        // extraMeta;
       }
       // removeAttrs args [
         "extraMeta"
@@ -748,6 +746,12 @@ in
   ubootRaspberryPi = buildUBoot {
     defconfig = "rpi_defconfig";
     extraMeta.platforms = [ "armv6l-linux" ];
+    filesToInstall = [ "u-boot.bin" ];
+  };
+
+  ubootRaspberryPiAarch64 = buildUBoot {
+    defconfig = "rpi_arm64_defconfig";
+    extraMeta.platforms = [ "aarch64-linux" ];
     filesToInstall = [ "u-boot.bin" ];
   };
 

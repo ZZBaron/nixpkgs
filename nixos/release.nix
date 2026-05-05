@@ -172,6 +172,7 @@ let
               { ... }:
               {
                 fileSystems."/".device = mkDefault "/dev/sda1";
+                fileSystems."/".fsType = mkDefault "auto";
                 boot.loader.grub.device = mkDefault "/dev/sda";
               }
             );
@@ -306,7 +307,7 @@ rec {
   );
 
   # KVM image for proxmox in VMA format
-  proxmoxImage = forMatchingSystems [ "x86_64-linux" ] (
+  proxmoxVMA = forMatchingSystems [ "x86_64-linux" ] (
     system:
     with import ./.. { inherit system; };
 
@@ -317,6 +318,25 @@ rec {
           ./modules/virtualisation/proxmox-image.nix
         ];
       }).config.system.build.VMA
+    )
+  );
+
+  # Keeping the old name for compatibility
+  proxmoxImage = proxmoxVMA;
+
+  # cloud-init image compatible with instructions given here:
+  # https://pve.proxmox.com/wiki/Cloud-Init_Support
+  proxmoxCloudImage = forMatchingSystems [ "x86_64-linux" ] (
+    system:
+    with import ./.. { inherit system; };
+
+    hydraJob (
+      (import lib/eval-config.nix {
+        inherit system;
+        modules = [
+          ./modules/virtualisation/proxmox-image.nix
+        ];
+      }).config.system.build.cloudImage
     )
   );
 
@@ -476,7 +496,10 @@ rec {
           modules = singleton (
             { ... }:
             {
-              fileSystems."/".device = mkDefault "/dev/sda1";
+              fileSystems."/" = {
+                device = mkDefault "/dev/sda1";
+                fsType = "ext4";
+              };
               boot.loader.grub.device = mkDefault "/dev/sda";
               system.stateVersion = mkDefault lib.trivial.release;
             }

@@ -3,8 +3,7 @@
   stdenvNoCC,
   buildGoModule,
   fetchFromGitHub,
-  pnpm_10,
-  pnpm ? pnpm_10,
+  pnpm_10_29_2,
   fetchPnpmDeps,
   pnpmConfigHook,
   nodejs,
@@ -38,24 +37,26 @@ let
 
     meta.mainProgram = "sparkle-service";
   };
+
+  pnpm = pnpm_10_29_2;
 in
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "sparkle";
-  version = "1.26.2";
+  version = "1.26.4";
 
   src = fetchFromGitHub {
     owner = "xishang0128";
     repo = "sparkle";
     tag = finalAttrs.version;
-    hash = "sha256-6/VdWVobiBjjggC215g/zZmVAx1EzGbPE6+xp6ekcJw=";
+    hash = "sha256-+3MHCy1N1/kOVFYDNvNiP/jkL0HHi2RwfeIqe2Z40O8=";
   };
 
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname version src;
     inherit pnpm;
     fetcherVersion = 3;
-    hash = "sha256-P0KwmLwj1FIWBduT2DzOaRCYrbQ+kvcCdCgabAhmMm8=";
+    hash = "sha256-Us4qsCJdRZKYJQAgcqeStX7MfEqBWr4rKXBqU2K+KZI=";
   };
 
   nativeBuildInputs = [
@@ -136,7 +137,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     })
   ];
 
-  passthru.updateScript = nix-update-script { };
+  passthru.updateScript = nix-update-script { extraArgs = [ "--use-github-releases" ]; };
 
   meta = {
     description = "Another Mihomo GUI";
